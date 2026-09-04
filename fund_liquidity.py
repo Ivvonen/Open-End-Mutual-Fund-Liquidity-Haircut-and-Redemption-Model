@@ -1,94 +1,101 @@
+import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 
 class FundLiquidityEngine:
     def __init__(self, asset_names, shares_held, spot_prices, avg_daily_volumes):
-        """
-        Models a mutual fund or UCITS fund portfolio's underlying liquidity constraints.
-        """
         self.assets = asset_names
-        self.shares = np.array(shares_held)
-        self.prices = np.array(spot_prices)
-        self.adv = np.array(avg_daily_volumes) # Average Daily Volume (Shares)
+        self.shares = np.array(shares_held, dtype=float)
+        self.prices = np.array(spot_prices, dtype=float)
+        self.adv = np.array(avg_daily_volumes, dtype=float)
         
-        # Calculate Base Portfolio Metrics
         self.position_values = self.shares * self.prices
         self.total_aum = np.sum(self.position_values)
         self.weights = self.position_values / self.total_aum
 
-    def simulate_redemption_run(self, redemption_pct=0.25, max_adv_participation=0.10, impact_parameter=0.0005):
-        """
-        Simulates meeting a massive redemption request using two distinct corporate actions.
-        Returns the post-run portfolio structure and the transaction cost drag.
-        """
+    def simulate_waterfall_run(self, redemption_pct, max_adv_participation=0.10, impact_parameter=0.0005):
         cash_needed = self.total_aum * redemption_pct
-        
-        # --- STRATEGY 1: PRO-RATA LIQUIDATION ---
-        # We sell exactly redemption_pct of every single holding
-        shares_to_sell_pr = self.shares * redemption_pct
-        value_sold_pr = shares_to_sell_pr * self.prices
-        
-        # Days required to liquidate each asset under participation limits
-        days_to_liquidate_pr = shares_to_sell_pr / (self.adv * max_adv_participation)
-        
-        # Market impact cost calculation (Slippage/Haircut model)
-        # Higher percentage of ADV traded in a day = worse price execution
-        adv_pct_per_day = (shares_to_sell_pr / np.maximum(1, np.ceil(days_to_liquidate_pr))) / self.adv
-        price_haircut_pct = impact_parameter * (adv_pct_per_day ** 2)
-        total_slippage_cost_pr = np.sum(value_sold_pr * price_haircut_pct)
-        
-        # --- STRATEGY 2: WATERFALL LIQUIDATION (Liquid Assets First) ---
-        # Sort positions by liquidity density: ADV Dollar Volume / Position Value
         dollar_adv = self.adv * self.prices
         liquidity_score = dollar_adv / self.position_values
-        sorted_indices = np.argsort(-liquidity_score) # Most liquid first
+        sorted_indices = np.argsort(-liquidity_score)
         
         cash_raised = 0.0
-        total_slippage_cost_wf = 0.0
-        shares_left_wf = self.shares.copy()
+        total_slippage_cost = 0.0
+        shares_left = self.shares.copy()
         
         for idx in sorted_indices:
             if cash_raised >= cash_needed:
                 break
-                
             cash_still_needed = cash_needed - cash_raised
-            max_value_available = shares_left_wf[idx] * self.prices[idx]
+            max_value_available = shares_left[idx] * self.prices[idx]
             
-            # Determine how much of this specific asset to liquidate
             value_to_liquidate = min(cash_still_needed, max_value_available)
             shares_liquidated = value_to_liquidate / self.prices[idx]
             
-            # Calculate market impact for this specific asset chunk
             days_needed = shares_liquidated / (self.adv[idx] * max_adv_participation)
             chunk_adv_pct = (shares_liquidated / max(1, np.ceil(days_needed))) / self.adv[idx]
             haircut = impact_parameter * (chunk_adv_pct ** 2)
             
-            total_slippage_cost_wf += value_to_liquidate * haircut
+            total_slippage_cost += value_to_liquidate * haircut
             cash_raised += value_to_liquidate
-            shares_left_wf[idx] -= shares_liquidated
+            shares_left[idx] -= shares_liquidated
 
-        return {
-            "Total AUM": self.total_aum,
-            "Cash Required": cash_needed,
-            "Pro-Rata Slippage Loss": total_slippage_cost_pr,
-            "Waterfall Slippage Loss": total_slippage_cost_wf,
-            "Max Days to Liquidate (Pro-Rata)": np.max(days_to_liquidate_pr)
-        }
+        post_values = shares_left * self.prices
+        return total_slippage_cost, post_values
 
-# --- EXECUTE TEST CASE ---
-if __name__ == "__main__":
-    # Portfolio of 3 assets: 1 highly liquid, 1 medium, 1 highly illiquid small-cap
-    assets = ["Liquid BlueChip", "MidCap Stock", "Illiquid SmallCap"]
-    shares = [500000, 200000, 150000]
-    prices = [150.0, 50.0, 20.0]
-    volumes = [2000000, 300000, 15000] # Notice the tiny volume on SmallCap
-    
-    fund = FundLiquidityEngine(assets, shares, prices, volumes)
-    results = fund.simulate_redemption_run(redemption_pct=0.30) # 30% Fund Run
-    
-    print(f"Initial Fund Assets Under Management: ${results['Total AUM']:,.2f}")
-    print(f"Sudden Investor Redemption Shock (30%): ${results['Cash Required']:,.2f}")
-    print("-" * 60)
-    print(f"Pro-Rata Liquidation Transaction Cost:  ${results['Pro-Rata Slippage Loss']:,.2f}")
-    print(f"Waterfall Liquidation Transaction Cost: ${results['Waterfall Slippage Loss']:,.2f}")
-    print(f"Time required to exit illiquid pockets: {results['Max Days to Liquidate (Pro-Rata)']:.1f} Days")
+# --- STREAMLIT UI ---
+st.set_page_config(page_title="Fund Liquidity Risk Engine", layout="wide")
+st.title("🌊 Asset Management Liquidity Risk & Swing Pricing Simulator")
+st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments to protect remaining fund investors.")
+
+st.sidebar.header("⚙️ Fund Capital Controls")
+redemption_slider = st.sidebar.slider("Investor Redemption Shock (% of AUM)", 5, 60, 25) / 100
+participation_limit = st.sidebar.slider("Max Daily Volume Participation Limit (% ADV)", 5, 25, 10) / 100
+slippage_severity = st.sidebar.slider("Market Impact Severity Factor", 0.0001, 0.0020, 0.0005, step=0.0001)
+enable_swing_pricing = st.sidebar.checkbox("Deploy Anti-Dilution Swing Factor", value=True)
+
+# Define Base Portfolio (Liquid Bluechip, Volatile Midcap, Illiquid Smallcap)
+assets = ["Liquid BlueChip", "MidCap Stock", "Illiquid SmallCap"]
+base_shares = [100000, 300000, 500000]
+base_prices = [150.0, 50.0, 20.0]
+base_volumes = [2000000, 500000, 40000] # Strained thin float on Smallcap
+
+engine = FundLiquidityEngine(assets, base_shares, base_prices, base_volumes)
+total_slippage, post_position_values = engine.simulate_waterfall_run(redemption_slider, participation_limit, slippage_severity)
+
+# Calculate Swing Metric Implications
+base_nav_per_share = 100.0
+total_fund_shares = engine.total_aum / base_nav_per_share
+slippage_per_share = total_slippage / total_fund_shares
+swing_factor_pct = (total_slippage / engine.total_aum) * 100
+
+swung_nav = base_nav_per_share - slippage_per_share if enable_swing_pricing else base_nav_per_share
+unprotected_remaining_nav = base_nav_per_share - (slippage_per_share * (1 / max(0.01, 1 - redemption_slider)))
+
+# Layout UI KPI Blocks
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Initial Portfolio AUM", f"${engine.total_aum:,.2f}")
+c2.metric("Redemption Capital Drain", f"${(engine.total_aum * redemption_slider):,.2f}")
+c3.metric("Total Market Impact Cost", f"${total_slippage:,.2f}")
+c4.metric("Calculated Swing Factor", f"{swing_factor_pct:.4f}%")
+
+st.markdown("---")
+chart_col, matrix_col = st.columns([2, 1])
+
+with chart_col:
+    st.subheader("Structural Asset Distortion (Before vs After Outflows)")
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=assets, y=engine.weights * 100, name='Initial Structure Weight', marker_color='#1f77b4'))
+    fig.add_trace(go.Bar(x=assets, y=(post_position_values / np.sum(post_position_values)) * 100, name='Post-Run Stressed Weight', marker_color='#ff7f0e'))
+    fig.update_layout(bgroupmode='group', xaxis_title="Asset Class Pool", yaxis_title="Portfolio Concentration (%)", margin=dict(l=20, r=20, t=20, b=20), height=350)
+    st.plotly_chart(fig, use_container_width=True)
+
+with matrix_col:
+    st.subheader("Investor Impact Analytics")
+    if enable_swing_pricing:
+        st.info(f"🟢 **Swing Pricing Active**\n\nRedeeming investors exit at an adjusted NAV of **${swung_nav:,.2f}**, internalizing the liquidity impact costs.")
+        st.success(f"**Remaining Investor NAV Protection:** **${base_nav_per_share:,.2f}** (0.0% dilution)")
+    else:
+        st.warning(f"🔴 **Swing Pricing Disabled**\n\nRedeeming investors exit at a full **${base_nav_per_share:,.2f}** NAV, leaving transaction costs behind.")
+        st.error(f"**Diluted Remaining Investor NAV:** **${unprotected_remaining_nav:,.2f}**")
