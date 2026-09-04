@@ -85,10 +85,13 @@ chart_col, matrix_col = st.columns([2, 1])
 
 with chart_col:
     st.subheader("Structural Asset Distortion (Before vs After Outflows)")
+    
     fig = go.Figure()
     fig.add_trace(go.Bar(x=assets, y=engine.weights * 100, name='Initial Structure Weight', marker_color='#1f77b4'))
     fig.add_trace(go.Bar(x=assets, y=(post_position_values / np.sum(post_position_values)) * 100, name='Post-Run Stressed Weight', marker_color='#ff7f0e'))
-        fig.update_layout(
+    
+    # --- PROPERLY ALIGNED INDENTATION ---
+    fig.update_layout(
         barmode='group', 
         xaxis_title="Asset Class Pool", 
         yaxis_title="Portfolio Concentration (%)", 
