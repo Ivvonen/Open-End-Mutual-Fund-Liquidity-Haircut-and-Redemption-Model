@@ -46,10 +46,10 @@ class FundLiquidityEngine:
 
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="Fund Liquidity Risk Engine", layout="wide")
-st.title("🌊 Asset Management Liquidity Risk & Swing Pricing Simulator")
+st.title("Asset Management Liquidity Risk & Swing Pricing Simulator")
 st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments to protect remaining fund investors.")
 
-st.sidebar.header("⚙️ Fund Capital Controls")
+st.sidebar.header("Fund Capital Controls")
 redemption_slider = st.sidebar.slider("Investor Redemption Shock (% of AUM)", 5, 60, 25) / 100
 participation_limit = st.sidebar.slider("Max Daily Volume Participation Limit (% ADV)", 5, 25, 10) / 100
 slippage_severity = st.sidebar.slider("Market Impact Severity Factor", 0.0001, 0.0020, 0.0005, step=0.0001)
