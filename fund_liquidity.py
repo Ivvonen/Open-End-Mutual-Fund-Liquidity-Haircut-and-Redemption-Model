@@ -30,11 +30,18 @@ class FundLiquidityEngine:
             cash_still_needed = cash_needed - cash_raised
             max_value_available = shares_left[idx] * self.prices[idx]
             
+            # --- FIX: Dynamically constrain daily volume by the slider limit ---
+            max_daily_dollar_volume = dollar_adv[idx] * max_adv_participation
             value_to_liquidate = min(cash_still_needed, max_value_available)
             shares_liquidated = value_to_liquidate / self.prices[idx]
             
-            days_needed = shares_liquidated / (self.adv[idx] * max_adv_participation)
-            chunk_adv_pct = (shares_liquidated / max(1, np.ceil(days_needed))) / self.adv[idx]
+            # Calculate days needed based on the cap
+            days_needed = max(1.0, np.ceil(value_to_liquidate / max(1.0, max_daily_dollar_volume)))
+            
+            # Determine daily chunk participation rate
+            chunk_adv_pct = (shares_liquidated / days_needed) / self.adv[idx]
+            
+            # Total slippage cost now dynamically reacts to the length of liquidation days!
             haircut = impact_parameter * (chunk_adv_pct ** 2)
             
             total_slippage_cost += value_to_liquidate * haircut
@@ -43,6 +50,7 @@ class FundLiquidityEngine:
 
         post_values = shares_left * self.prices
         return total_slippage_cost, post_values
+
 
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="Fund Liquidity Risk Model", layout="wide")
