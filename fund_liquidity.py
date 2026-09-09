@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-# --- 1. QUANTITATIVE FUND ENGINE ---
+# --- 1. QUANTITATIVE FUND MODEL ---
 
 class FundLiquidityEngine:
     def __init__(self, asset_names, shares_held, spot_prices, avg_daily_volumes):
@@ -40,8 +40,8 @@ class FundLiquidityEngine:
             
             value_to_liquidate = min(cash_still_needed, max_value_available)
             shares_liquidated = value_to_liquidate / self.prices[idx]
+
             
-            # --- THE DYNAMIC FIX ---
             # Bound the maximum dollar volume we are legally allowed to trade per day
             max_daily_dollar_volume = dollar_adv[idx] * max_adv_participation
             
@@ -62,10 +62,10 @@ class FundLiquidityEngine:
         post_values = shares_left * self.prices
         return total_slippage_cost, post_values
 
-# --- 2. STREAMLIT INTERFACE & SLIDER ASSIGNMENTS ---
+# --- 2. STREAMLIT INTERFACE & SLIDER ---
 
 st.set_page_config(page_title="Fund Liquidity Risk Engine", layout="wide")
-st.title("🌊 Asset Management Liquidity Risk & Swing Pricing Simulator")
+st.title("Asset Management Liquidity Risk & Swing Pricing Simulator")
 st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments.")
 
 st.sidebar.header("⚙️ Fund Capital Controls")
