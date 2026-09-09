@@ -102,7 +102,7 @@ unprotected_remaining_nav = base_nav_per_share - (slippage_per_share * (1 / max(
 
 # KPI Layout Blocks
 c1, c2, c3, c4 = st.columns(4)
-c1.markdown("#### Initial Portfolio AUM")
+c1.markdown("##### Initial Portfolio AUM")
 c1.write(f"**${engine.total_aum:,.2f}**")
 
 c2.metric("Redemption Capital Drain", f"${(engine.total_aum * redemption_slider):,.2f}")
