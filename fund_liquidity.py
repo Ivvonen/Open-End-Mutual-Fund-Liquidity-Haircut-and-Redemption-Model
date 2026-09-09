@@ -107,7 +107,10 @@ c1.write(f"**${engine.total_aum:,.2f}**")
 
 c2.markdown("##### Redemption Capital Drain") 
 c2.write(f"**${(engine.total_aum * redemption_slider):,.2f}**")
-c3.metric("Total Market Impact Cost", f"${total_slippage:,.2f}")
+
+c3.markdown("#####Total Market Impact Cost") 
+c3.write (f"**${total_slippage:,.2f}**")
+
 c4.metric("Calculated Swing Factor", f"{swing_factor_pct:.4f}%")
 
 st.markdown("---")
