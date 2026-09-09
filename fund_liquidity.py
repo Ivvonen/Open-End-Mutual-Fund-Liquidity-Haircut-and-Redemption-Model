@@ -85,7 +85,6 @@ base_volumes = [1000000, 200000, 15000] # Thin float on small-cap
 # Instantiate Engine
 engine = FundLiquidityEngine(assets, base_shares, base_prices, base_volumes)
 
-# --- CRITICAL FIX: SLIDERS EXPLICITLY PASSED INTO CODE EXECUTION HERE ---
 total_slippage, post_position_values = engine.simulate_liquidation_run(
     redemption_pct=redemption_slider, 
     max_adv_participation=participation_limit, 
