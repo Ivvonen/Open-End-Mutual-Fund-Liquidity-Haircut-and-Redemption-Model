@@ -68,7 +68,7 @@ st.set_page_config(page_title="Fund Liquidity Risk Model", layout="wide")
 st.subheader("Asset Management Liquidity Risk & Swing Pricing Simulator")
 st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments.")
 
-st.sidebar.header("⚙️ Fund Capital Controls")
+st.sidebar.header("Fund Capital Controls")
 
 # ALL SLIDER VARIABLE NAME KEYS DECLARED HERE
 redemption_slider = st.sidebar.slider("Investor Redemption Shock (% of AUM)", 5, 60, 25) / 100
