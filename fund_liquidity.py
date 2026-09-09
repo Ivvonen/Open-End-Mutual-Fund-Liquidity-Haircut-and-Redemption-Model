@@ -111,7 +111,7 @@ c2.write(f"**${(engine.total_aum * redemption_slider):,.2f}**")
 c3.markdown("##### Total Market Impact Cost") 
 c3.write (f"**${total_slippage:,.2f}**")
 
-c4.markdown("Calculated Swing Factor") 
+c4.markdown("##### Calculated Swing Factor") 
 c4.write (f"**{swing_factor_pct:.4f}%**")
 
 st.markdown("---")
