@@ -52,7 +52,7 @@ st.markdown("This model simulates fund run behaviors, asset liquidation horizons
 st.sidebar.header("Fund Capital Controls")
 redemption_slider = st.sidebar.slider("Investor Redemption Shock (% of AUM)", 5, 60, 25) / 100
 participation_limit = st.sidebar.slider("Max Daily Volume Participation Limit (% ADV)", 5, 25, 10) / 100
-slippage_severity = st.sidebar.slider("Market Impact Severity Factor", 0.0001, 0.0020, 0.0005, step=0.0001)
+slippage_severity = st.sidebar.slider("Market Impact Severity Factor", 0.0001, 0.0020, 0.0005, step=0.0001, format="%.2f)
 enable_swing_pricing = st.sidebar.checkbox("Deploy Anti-Dilution Swing Factor", value=True)
 
 # Define Base Portfolio (Liquid Bluechip, Volatile Midcap, Illiquid Smallcap)
