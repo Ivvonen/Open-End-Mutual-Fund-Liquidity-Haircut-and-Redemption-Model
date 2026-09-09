@@ -64,8 +64,8 @@ class FundLiquidityEngine:
 
 # --- 2. STREAMLIT INTERFACE & SLIDER ---
 
-st.set_page_config(page_title="Fund Liquidity Risk Engine", layout="wide")
-st.title("Asset Management Liquidity Risk & Swing Pricing Simulator")
+st.set_page_config(page_title="Fund Liquidity Risk Model", layout="wide")
+st.subheader("Asset Management Liquidity Risk & Swing Pricing Simulator")
 st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments.")
 
 st.sidebar.header("⚙️ Fund Capital Controls")
