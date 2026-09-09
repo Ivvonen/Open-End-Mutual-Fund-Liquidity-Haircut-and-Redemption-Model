@@ -33,16 +33,24 @@ class FundLiquidityEngine:
             value_to_liquidate = min(cash_still_needed, max_value_available)
             shares_liquidated = value_to_liquidate / self.prices[idx]
             
-            days_needed = shares_liquidated / (self.adv[idx] * max_adv_participation)
-            chunk_adv_pct = (shares_liquidated / max(1, np.ceil(days_needed))) / self.adv[idx]
-            haircut = impact_parameter * (chunk_adv_pct ** 2)
+            # --- FIX: Calculate execution velocity bound explicitly by the ADV slider ---
+            max_daily_dollar_volume = dollar_adv[idx] * max_adv_participation
+            days_needed = max(1.0, np.ceil(value_to_liquidate / max(1.0, max_daily_dollar_volume)))
             
-            total_slippage_cost += value_to_liquidate * haircut
+            # Divide execution evenly over the calculated days_needed
+            daily_shares_liquidated = shares_liquidated / days_needed
+            chunk_adv_pct = daily_shares_liquidated / self.adv[idx]
+            
+            # Apply non-linear market impact haircut across the execution runway
+            haircut = impact_parameter * (chunk_adv_pct ** 2)
+            total_slippage_cost += (value_to_liquidate * haircut)
+            
             cash_raised += value_to_liquidate
             shares_left[idx] -= shares_liquidated
 
         post_values = shares_left * self.prices
         return total_slippage_cost, post_values
+
 
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="Fund Liquidity Risk Engine", layout="wide")
