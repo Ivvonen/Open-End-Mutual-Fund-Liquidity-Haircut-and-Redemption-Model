@@ -45,9 +45,9 @@ class FundLiquidityEngine:
         return total_slippage_cost, post_values
 
 # --- STREAMLIT UI ---
-st.set_page_config(page_title="Fund Liquidity Risk Engine", layout="wide")
-st.title("Asset Management Liquidity Risk & Swing Pricing Model")
-st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments to protect remaining fund investors.")
+st.set_page_config(page_title="Fund Liquidity Risk Model", layout="wide")
+st.subheader("Open-End Mutual Fund Liquidity Haircut and Redemption Stress Test Model")
+st.markdown("This model simulates fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments to protect remaining fund investors.")
 
 st.sidebar.header("Fund Capital Controls")
 redemption_slider = st.sidebar.slider("Investor Redemption Shock (% of AUM)", 5, 60, 25) / 100
@@ -89,8 +89,8 @@ with chart_col:
     fig = go.Figure()
     fig.add_trace(go.Bar(x=assets, y=engine.weights * 100, name='Initial Structure Weight', marker_color='#1f77b4'))
     fig.add_trace(go.Bar(x=assets, y=(post_position_values / np.sum(post_position_values)) * 100, name='Post-Run Stressed Weight', marker_color='#ff7f0e'))
+
     
-    # --- PROPERLY ALIGNED INDENTATION ---
     fig.update_layout(
         barmode='group', 
         xaxis_title="Asset Class Pool", 
