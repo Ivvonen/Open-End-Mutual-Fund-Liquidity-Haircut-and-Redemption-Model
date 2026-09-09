@@ -66,7 +66,7 @@ class FundLiquidityEngine:
 
 st.set_page_config(page_title="Fund Liquidity Risk Model", layout="wide")
 st.subheader("Open-End Mutual Fund Liquidity Haircut and Redemption Model")
-st.markdown("Model fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments.")
+st.markdown("This model simulates fund run behaviors, asset liquidation horizons, and calculate anti-dilution swing adjustments.")
 
 st.sidebar.header("Fund Capital Controls")
 
